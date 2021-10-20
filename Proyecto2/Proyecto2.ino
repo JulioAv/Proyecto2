@@ -50,6 +50,69 @@ void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int 
 
 //extern uint8_t runner[];
 extern uint8_t background[];
+extern uint8_t runnerBit[];
+extern uint8_t bossBit[];
+extern uint8_t cloudBit[];
+extern uint8_t rutaBit[];
+//extern uint8_t rockBit[];
+struct Sprite1 { // estructura para sprites
+  int x; // posicion x
+  int y; // posicion y
+  int width; // ancho de bitmap
+  int height; // altura de bitmap
+  int columns; // columna sprite sheet
+  int index; // indice sprite sheet
+  int flip; // voltear imagen
+  int offset; // desfase
+}runner, cloud, boss, ruta;
+
+//struct Sprite2 { // estructura para sprites
+//  int x; // posicion x
+//  int y; // posicion y
+//  int width; // ancho de bitmap
+//  int height; // altura de bitmap
+//  int columns; // columna sprite sheet
+//  int index; // indice sprite sheet
+//  int flip; // voltear imagen
+//  int offset; // desfase
+//}boss;
+
+//struct Sprite3 { // estructura para sprites
+//  int x; // posicion x
+//  int y; // posicion y
+//  int width; // ancho de bitmap
+//  int height; // altura de bitmap
+//  int columns; // columna sprite sheet
+//  int index; // indice sprite sheet
+//  int flip; // voltear imagen
+//  int offset; // desfase
+//}cloud;
+
+//struct Sprite4 { // estructura para sprites
+//  int x; // posicion x
+//  int y; // posicion y
+//  int width; // ancho de bitmap
+//  int height; // altura de bitmap
+//  int columns; // columna sprite sheet
+//  int index; // indice sprite sheet
+//  int flip; // voltear imagen
+//  int offset; // desfase
+//}ruta;
+
+//struct Sprite5 { // estructura para sprites
+//  int x; // posicion x
+//  int y; // posicion y
+//  int width; // ancho de bitmap
+//  int height; // altura de bitmap
+//  int columns; // columna sprite sheet
+//  int index; // indice sprite sheet
+//  int flip; // voltear imagen
+//  int offset; // desfase
+//}rock;
+
+int subir, bajar;
+unsigned long previousMillis = 0;  
+const long interval = 42;
 
 void setup() {
   SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
@@ -58,7 +121,8 @@ void setup() {
   Serial.println("Start");
   LCD_Init();
   LCD_Clear(0x00);
-
+  pinMode(PUSH1, INPUT_PULLUP);
+  pinMode(PUSH2, INPUT_PULLUP);
   //FillRect(unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int c)
   FillRect(80, 60, 160, 120, 0x0400);
 
@@ -70,12 +134,51 @@ void setup() {
     
   //LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
   LCD_Bitmap(0, 0, 320, 240, background);
-//  for(int x = 0; x<320 ; x++){
-//    V_line( x-1, 100, 18, 0xffff);
-//  }
-//  V_line( 100, 100, 18, 0xffff);
-//  LCD_Bitmap(100, 100, 13, 18, runner);
-  
+
+  runner.x = 20;
+  runner.y = 200;
+  runner.width = 28;
+  runner.height = 39;
+  runner.columns = 8;
+  runner.index = 0;
+  runner.flip = 0;
+  runner.offset = 0;
+
+  boss.x = 150;
+  boss.y = 100;
+  boss.width = 64;
+  boss.height = 34;
+  boss.columns = 1;
+  boss.index = 0;
+  boss.flip = 0;
+  boss.offset = 0;
+
+  cloud.x = 320;
+  cloud.y = 40;
+  cloud.width = 36;
+  cloud.height = 15;
+  cloud.columns = 1;
+  cloud.index = 0;
+  cloud.flip = 0;
+  cloud.offset = 0;
+
+  ruta.x = 0;
+  ruta.y = 120;
+  ruta.width = 320;
+  ruta.height = 120;
+  ruta.columns = 5;
+  ruta.index = 0;
+  ruta.flip = 0;
+  ruta.offset = 0;
+//
+//  rock.x = 150;
+//  rock.y = 100;
+//  rock.width = 32;
+//  rock.height = 32;
+//  rock.columns = 1;
+//  rock.index = 0;
+//  rock.flip = 0;
+//  rock.offset = 0;
 
  
 }
@@ -83,46 +186,67 @@ void setup() {
 // Loop
 //***************************************************************************************************************************************
 void loop() {
-  FillRect(35, 40, 36, 15, 0x0000);
-  for(int x = 0; x <320-32; x++){
-    delay(10);
+    unsigned long currentMillis = millis();
+  
+  // actualización de frame cada 42ms = 24fps
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    bool down = !digitalRead(PUSH1); // lectura de entradas
+    bool up = !digitalRead(PUSH2);
+    if (up) { // modificación de atributos de sprite
+      boss.y += 4;
+      boss.index++;
+      boss.index %= 4;
+      boss.flip = 0;
+      subir = 1;
+    }
+    if (down) {
+      boss.y -= 4;
+      boss.index++;
+      boss.index %= 4;
+      boss.flip = 0;
+      subir = 0;
+    }
+    if(boss.y >= 150){
+      boss.y = 149;
+    }
+    else if(boss.y <= 0){
+      boss.y = 1;
+    }
+    runner.index++;
+    runner.index %=9;
     
-    //LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int columns, int index, char flip, char offset);
-//    int runner6_index = (x/5)%6;
-//
-//    LCD_Sprite(10, 200, 28, 39, runner6, 6, runner6_index, 0, 0);
+    LCD_Sprite(runner.x, runner.y, runner.width, runner.height, runnerBit, runner.columns, runner.index, runner.flip, runner.offset);
+    if (subir==1){ // dependiendo de la dirección, se colorea resto del sprite del frame anterior
+      FillRect(boss.x, boss.y - boss.height/2, boss.width, boss.height, 0x0000);
+    }
+    else{
+      FillRect(boss.x, boss.y + boss.height/2, boss.width, boss.height, 0x0000);
+    }
+    LCD_Sprite(boss.x, boss.y, boss.width, boss.height, bossBit, boss.columns, boss.index, boss.flip, boss.offset);
 
-    int runner8_index = (x/2)%8;
+    cloud.x-=2;
+    if((cloud.x+cloud.width)==0){
+      cloud.x = 320;
+    }
+    LCD_Sprite(cloud.x, cloud.y, cloud.width, cloud.height, cloudBit, cloud.columns, cloud.index, cloud.flip, cloud.offset);
+    FillRect(cloud.x + cloud.width, cloud.y, cloud.width, cloud.height, 0x0000);
+    ruta.index %=5;
+    LCD_Sprite(ruta.x, ruta.y, ruta.width, ruta.height, rutaBit, ruta.columns, ruta.index, ruta.flip, ruta.offset);
+//    
+//    int runner8_index = (x/2)%8;
+//    LCD_Sprite(20, 200, 28, 39, runner8, 8, runner8_index, 0, 0);
+//    
+//    int boss_index = (x/11)%1;
+//    LCD_Sprite(150, y, 64, 32, boss, 1, boss_index, 1, 0);
+//
+//    int cloud_index = (x/11)%1;
+//    LCD_Sprite(320-x, 40, 36, 15, cloud, 1, boss_index, 1, 0);
+//    V_line(320-x, 40, 15, 0x0000);
 
-    LCD_Sprite(20, 200, 28, 39, runner8, 8, runner8_index, 0, 0);
-    
-    //V_line( x -1, 200, 32, 0xffff);
-//
-    int boss_index = (x/11)%1;
-//    
-    LCD_Sprite(150, 100, 64, 32, boss, 1, boss_index, 1, 0);
-
-    int cloud_index = (x/11)%1;
-//    
-    LCD_Sprite(320-x, 40, 36, 15, cloud, 1, boss_index, 1, 0);
-    V_line(320-x, 40, 15, 0x0000);
-//    V_line( x -1, 175, 32, 0x421b);
-//  }
-//  for(int x = 320-32; x >0; x--){
-//    delay(10);
-//
-//    int mario_index = (x/11)%8;
-//    
-//    LCD_Sprite(x, 20, 16, 32, mario, 8, mario_index, 0, 0);
-//    V_line(x + 16, 20, 32, 0x0000);
-//
-//    int bowser_index = (x/11)%4;
-//    
-//    LCD_Sprite(x, 175, 32, 32, bowser, 4, bowser_index, 0, 1);
-//    V_line(x + 32, 175, 32, 0x421b);
-//  } 
 }
 }
+
 //***************************************************************************************************************************************
 // Función para inicializar LCD
 //***************************************************************************************************************************************
@@ -460,4 +584,7 @@ void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int 
     }
   }
   digitalWrite(LCD_CS, HIGH);
+}
+bool Collision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2){
+  return (x1 < x2 + w2) && (x1+ w1 > x2) && (y1 < y2 + h2) && (y1 + h1 > y2);
 }
