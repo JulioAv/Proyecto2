@@ -20,7 +20,9 @@
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
-
+#include <SPI.h>
+#include <SD.h>
+File myFile;
 #include "bitmaps.h"
 #include "font.h"
 #include "lcd_registers.h"
@@ -47,14 +49,16 @@ void LCD_Print(String text, int x, int y, int fontSize, int color, int backgroun
 
 void LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
 void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int columns, int index, char flip, char offset);
+void Muerto(void);
+void Menu(void);
 
 //extern uint8_t runner[];
 extern uint8_t background[];
 extern uint8_t runnerBit[];
 extern uint8_t bossBit[];
 extern uint8_t cloudBit[];
-extern uint8_t rutaBit[];
-//extern uint8_t rockBit[];
+extern uint8_t routeBit[];
+extern uint8_t rockBit[];
 struct Sprite1 { // estructura para sprites
   int x; // posicion x
   int y; // posicion y
@@ -64,76 +68,36 @@ struct Sprite1 { // estructura para sprites
   int index; // indice sprite sheet
   int flip; // voltear imagen
   int offset; // desfase
-}runner, cloud, boss, ruta;
+}runner, cloud, boss, route, rock;
 
-//struct Sprite2 { // estructura para sprites
-//  int x; // posicion x
-//  int y; // posicion y
-//  int width; // ancho de bitmap
-//  int height; // altura de bitmap
-//  int columns; // columna sprite sheet
-//  int index; // indice sprite sheet
-//  int flip; // voltear imagen
-//  int offset; // desfase
-//}boss;
 
-//struct Sprite3 { // estructura para sprites
-//  int x; // posicion x
-//  int y; // posicion y
-//  int width; // ancho de bitmap
-//  int height; // altura de bitmap
-//  int columns; // columna sprite sheet
-//  int index; // indice sprite sheet
-//  int flip; // voltear imagen
-//  int offset; // desfase
-//}cloud;
-
-//struct Sprite4 { // estructura para sprites
-//  int x; // posicion x
-//  int y; // posicion y
-//  int width; // ancho de bitmap
-//  int height; // altura de bitmap
-//  int columns; // columna sprite sheet
-//  int index; // indice sprite sheet
-//  int flip; // voltear imagen
-//  int offset; // desfase
-//}ruta;
-
-//struct Sprite5 { // estructura para sprites
-//  int x; // posicion x
-//  int y; // posicion y
-//  int width; // ancho de bitmap
-//  int height; // altura de bitmap
-//  int columns; // columna sprite sheet
-//  int index; // indice sprite sheet
-//  int flip; // voltear imagen
-//  int offset; // desfase
-//}rock;
-
-int subir, bajar;
+int subir, bajar, entrada, entradaa, contador;
 unsigned long previousMillis = 0;  
 const long interval = 42;
+int rock_flag, kick_flag = 0;
+bool colision, inicio;
+char buffer[1];
 
 void setup() {
   SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
   Serial.begin(9600);
+  Serial2.begin(9600);
+  Serial3.begin(9600);
   GPIOPadConfigSet(GPIO_PORTB_BASE, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
   Serial.println("Start");
   LCD_Init();
   LCD_Clear(0x00);
   pinMode(PUSH1, INPUT_PULLUP);
   pinMode(PUSH2, INPUT_PULLUP);
+  pinMode(BLUE_LED, OUTPUT);
+  SPI.setModule(0);                                       //Inicialización del módulo SPI0
+  pinMode(PA_3, OUTPUT);
+  SD.begin(PA_3);
   //FillRect(unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int c)
-  FillRect(80, 60, 160, 120, 0x0400);
 
-  //LCD_Print(String text, int x, int y, int fontSize, int color, int background)
-  String text1 = "BIT.TRIP RUNNER";
-  LCD_Print(text1, 110, 110, 2, 0xffff, 0x0000);
-  
-  delay(1000);
     
   //LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
-  LCD_Bitmap(0, 0, 320, 240, background);
+  
 
   runner.x = 20;
   runner.y = 200;
@@ -145,7 +109,7 @@ void setup() {
   runner.offset = 0;
 
   boss.x = 150;
-  boss.y = 100;
+  boss.y = 120;
   boss.width = 64;
   boss.height = 34;
   boss.columns = 1;
@@ -162,90 +126,156 @@ void setup() {
   cloud.flip = 0;
   cloud.offset = 0;
 
-  ruta.x = 0;
-  ruta.y = 120;
-  ruta.width = 320;
-  ruta.height = 120;
-  ruta.columns = 5;
-  ruta.index = 0;
-  ruta.flip = 0;
-  ruta.offset = 0;
+  route.x = 0;
+  route.y = 120;
+  route.width = 320;
+  route.height = 120;
+  route.columns = 5;
+  route.index = 0;
+  route.flip = 0;
+  route.offset = 0;
 //
-//  rock.x = 150;
-//  rock.y = 100;
-//  rock.width = 32;
-//  rock.height = 32;
-//  rock.columns = 1;
-//  rock.index = 0;
-//  rock.flip = 0;
-//  rock.offset = 0;
+  rock.x = 150;
+  rock.y = 100;
+  rock.width = 32;
+  rock.height = 32;
+  rock.columns = 1;
+  rock.index = 0;
+  rock.flip = 0;
+  rock.offset = 0;
 
- 
+  Serial.write("probando");
+  
+ inicio = 0;
+ Menu();
 }
 //***************************************************************************************************************************************
 // Loop
 //***************************************************************************************************************************************
 void loop() {
     unsigned long currentMillis = millis();
-  
+  if(inicio){
+    LCD_Bitmap(0, 0, 320, 240, background);
+    contador = 0;
+    inicio = 0;
+  }
   // actualización de frame cada 42ms = 24fps
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    bool down = !digitalRead(PUSH1); // lectura de entradas
-    bool up = !digitalRead(PUSH2);
-    if (up) { // modificación de atributos de sprite
-      boss.y += 4;
+    if(Serial2.available()){
+      entrada = Serial2.read();
+    }
+    if(Serial3.available()){
+      entradaa = Serial3.read();
+    }
+    //************************************************************************************************************************************
+    //Configuracion y acciones del BOSS
+    //*************************************************************************************************************************************
+    if (entrada == 0x31) { // modificación de atributos de sprite
+      boss.x += 4;
+      if(rock_flag!=2){
+        rock.x +=4;
+      }
       boss.index++;
       boss.index %= 4;
       boss.flip = 0;
       subir = 1;
+      //entrada = 0;
     }
-    if (down) {
-      boss.y -= 4;
+    if (entrada == 0x32) {
+      boss.x -= 4;
+      if(rock_flag!=2){
+        rock.x -=4;
+      }
       boss.index++;
       boss.index %= 4;
       boss.flip = 0;
+      bajar = 1;
+      //entrada = 0;
+    }
+    if(boss.x >= 320){
+      boss.x = 319;
+    }
+    else if(boss.x <= 0){
+      boss.x = 1;
+    }
+    if (subir==1){ // dependiendo de la dirección, se colorea resto del sprite del frame anterior
+      FillRect(boss.x- boss.width/2, boss.y, boss.width, boss.height, 0x0000);
       subir = 0;
     }
-    if(boss.y >= 150){
-      boss.y = 149;
+    else if(bajar==1){
+      FillRect(boss.x + boss.width/2, boss.y, boss.width, boss.height, 0x0000);
+      bajar = 0;
     }
-    else if(boss.y <= 0){
-      boss.y = 1;
-    }
+    LCD_Sprite(boss.x, boss.y, boss.width, boss.height, bossBit, boss.columns, boss.index, boss.flip, boss.offset);
+    //************************************************************************************************************************************
+    //Configuracion y acciones del runner
+    //*************************************************************************************************************************************
     runner.index++;
     runner.index %=9;
     
     LCD_Sprite(runner.x, runner.y, runner.width, runner.height, runnerBit, runner.columns, runner.index, runner.flip, runner.offset);
-    if (subir==1){ // dependiendo de la dirección, se colorea resto del sprite del frame anterior
-      FillRect(boss.x, boss.y - boss.height/2, boss.width, boss.height, 0x0000);
+    if(entradaa == 0x31){
+      //FillRect(runner.x, runner.y, runner.width, runner.height, 0xffff);
+      LCD_Bitmap(runner.x, runner.y, runner.width, runner.height, runner_kick);
+      kick_flag = 1;
     }
     else{
-      FillRect(boss.x, boss.y + boss.height/2, boss.width, boss.height, 0x0000);
+      //FillRect(runner.x, runner.y, runner.width, runner.height, 0xffff);
+      LCD_Sprite(runner.x, runner.y, runner.width, runner.height, runnerBit, runner.columns, runner.index, runner.flip, runner.offset);
+      kick_flag = 0;
     }
-    LCD_Sprite(boss.x, boss.y, boss.width, boss.height, bossBit, boss.columns, boss.index, boss.flip, boss.offset);
-
+    //************************************************************************************************************************************
+    //Configuracion y acciones de la roca
+    //*************************************************************************************************************************************
+    if((entrada == 0x33)&&(rock_flag==0)){
+      digitalWrite(BLUE_LED, LOW);
+      rock_flag = 1;
+      entrada = 0;
+    }
+    if(rock_flag==1){
+      LCD_Bitmap(rock.x, rock.y, rock.width, rock.height, rockBit);
+      rock.y+=4;
+      FillRect(rock.x, rock.y-rock.height/10, rock.width, rock.height, 0xffff);
+    }
+    if(rock.y==208){
+        rock_flag = 2;
+      }
+    if(rock_flag==2){
+      LCD_Bitmap(rock.x, rock.y, rock.width, rock.height, rockBit);
+      rock.x-=4;
+      FillRect(rock.x + rock.width, rock.y, rock.width, rock.height, 0xffff);
+    }
+    if((rock.x <= runner.x)&&(rock_flag==2)){
+      rock_flag = 0;
+      digitalWrite(BLUE_LED, HIGH);
+      rock.x = boss.x;
+      rock.y = boss.y;
+    }
+    //************************************************************************************************************************************
+    //Configuracion y acciones de la nube
+    //*************************************************************************************************************************************
     cloud.x-=2;
     if((cloud.x+cloud.width)==0){
       cloud.x = 320;
     }
     LCD_Sprite(cloud.x, cloud.y, cloud.width, cloud.height, cloudBit, cloud.columns, cloud.index, cloud.flip, cloud.offset);
     FillRect(cloud.x + cloud.width, cloud.y, cloud.width, cloud.height, 0x0000);
-    ruta.index %=5;
-    LCD_Sprite(ruta.x, ruta.y, ruta.width, ruta.height, rutaBit, ruta.columns, ruta.index, ruta.flip, ruta.offset);
-//    
-//    int runner8_index = (x/2)%8;
-//    LCD_Sprite(20, 200, 28, 39, runner8, 8, runner8_index, 0, 0);
-//    
-//    int boss_index = (x/11)%1;
-//    LCD_Sprite(150, y, 64, 32, boss, 1, boss_index, 1, 0);
-//
-//    int cloud_index = (x/11)%1;
-//    LCD_Sprite(320-x, 40, 36, 15, cloud, 1, boss_index, 1, 0);
-//    V_line(320-x, 40, 15, 0x0000);
 
+    //***************************************************************************************************************************************
+    //Colision
+    //***************************************************************************************************************************************
+    colision = Collision(runner.x, runner.y, runner.width, runner.height, rock.x, rock.y, rock.width, rock.height);
+    if((colision)&&(kick_flag==0)){
+      Muerto();
+    }
+    else if((colision)&&(kick_flag==1)){
+      contador++;
+    }
+    
+  }
 }
-}
+
 
 //***************************************************************************************************************************************
 // Función para inicializar LCD
@@ -587,4 +617,74 @@ void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int 
 }
 bool Collision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2){
   return (x1 < x2 + w2) && (x1+ w1 > x2) && (y1 < y2 + h2) && (y1 + h1 > y2);
+}
+
+void Menu(){
+  FillRect(0,0,320,240,0x0000);
+  String text1 = "BIT.TRIP RUNNER";
+  LCD_Print(text1, 40, 110, 2, 0xffff, 0x0000);
+  delay(1000);
+  FillRect(0,0,320,240,0x0000);
+  text1 = "PRESIONE P1 PARA";
+  LCD_Print(text1, 40, 90, 2, 0xffff, 0x0000);
+  text1 = "NUEVA PARTIDA O";
+  LCD_Print(text1, 40, 110, 2, 0xffff, 0x0000);
+  text1 = "P2 PARA CARGAR SD";
+  LCD_Print(text1, 40, 130, 2, 0xffff, 0x0000);
+  entrada = Serial2.read();
+  entradaa = Serial3.read();
+  while(inicio==0){
+    entrada = Serial2.read();
+    entradaa = Serial3.read();
+    if(entrada==0x31){
+      inicio = 1;
+      contador = 0;
+    }
+    else if(entradaa==0x31){
+      myFile = SD.open("test.txt", FILE_READ);
+      contador = myFile.read();
+      myFile.close();
+      inicio = 1;
+    }
+  }
+  myFile = SD.open("test.txt", FILE_READ);
+  Serial.write(myFile.read());
+  myFile.close();
+  return;
+}
+
+void Muerto(){
+  colision = 0;
+  FillRect(50,50,220,140,0x0000);
+  sprintf(buffer, "%d", contador/7);
+  String text2 = buffer;
+  String text1 = "PUNTOS";
+  LCD_Print(text2, 60, 60, 2, 0xffff, 0x0000);
+  LCD_Print(text1, 110, 60, 2, 0xffff, 0x0000);
+  text1 = "PRESIONE";
+  LCD_Print(text1, 60, 80, 2, 0xffff, 0x0000);
+  text1 = "P1";
+  LCD_Print(text1, 60, 100, 2, 0xffff, 0x0000);
+  text1 = "PARA SEGUIR";
+  LCD_Print(text1, 60, 120, 2, 0xffff, 0x0000);
+  while(entrada!=0x31){
+    entrada = Serial2.read();
+    entradaa = Serial3.read();
+  }
+  myFile = SD.open("test.txt", FILE_WRITE);
+  sprintf(buffer, "%d", contador/7);
+  myFile.println(buffer);
+  myFile.close();
+  kick_flag = 0;
+  rock_flag = 0;
+  inicio = 1;
+  rock.x = boss.x;
+  rock.y = 100;
+  rock.width = 32;
+  rock.height = 32;
+  rock.columns = 1;
+  rock.index = 0;
+  rock.flip = 0;
+  rock.offset = 0;
+  return;
 }

@@ -63,6 +63,9 @@ Version 4.0 HI-TECH Software Intermediate Code
 [v _TXREG `Vuc ~T0 @X0 0 e@25 ]
 [t ~ __interrupt . k ]
 [t T1 __interrupt ]
+"4130
+[; ;C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h: 4130: extern volatile __bit RBIF __attribute__((address(0x58)));
+[v _RBIF `Vb ~T0 @X0 0 e@88 ]
 "4103
 [; ;C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h: 4103: extern volatile __bit RB0 __attribute__((address(0x30)));
 [v _RB0 `Vb ~T0 @X0 0 e@48 ]
@@ -75,7 +78,9 @@ Version 4.0 HI-TECH Software Intermediate Code
 "4112
 [; ;C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h: 4112: extern volatile __bit RB3 __attribute__((address(0x33)));
 [v _RB3 `Vb ~T0 @X0 0 e@51 ]
-"3387
+"194 C:\Program Files\Microchip\xc8\v2.31\pic\include\c90\stdio.h
+[v _sprintf `(i ~T0 @X0 0 e1v`*uc`*Cuc ]
+"3387 C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h
 [; ;C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h: 3387: extern volatile unsigned char ANSEL __attribute__((address(0x188)));
 [v _ANSEL `Vuc ~T0 @X0 0 e@392 ]
 "3449
@@ -153,10 +158,6 @@ Version 4.0 HI-TECH Software Intermediate Code
 [; ;C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h: 4175: extern volatile __bit RCIF __attribute__((address(0x65)));
 [v _RCIF `Vb ~T0 @X0 0 e@101 ]
 [p mainexit ]
-[v F1256 `(v ~T0 @X0 1 tf1`ul ]
-"92 C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\pic.h
-[v __delay `JF1256 ~T0 @X0 0 e ]
-[p i __delay ]
 "7 Control.c
 [p x FOSC  =  INTRC_NOCLKOUT ]
 "8
@@ -416,8 +417,8 @@ Version 4.0 HI-TECH Software Intermediate Code
 [; ;C:/Program Files/Microchip/MPLABX/v5.45/packs/Microchip/PIC16Fxxx_DFP/1.2.33/xc8\pic\include\proc\pic16f887.h: 3546: __asm("EECON2 equ 018Dh");
 [; <" EECON2 equ 018Dh ;# ">
 "30 Control.c
-[; ;Control.c: 30: char con[], buffer[];
-[v _con `uc ~T0 @X0 -> -> 1 `i `ux e ]
+[; ;Control.c: 30: char con, buffer[];
+[v _con `uc ~T0 @X0 1 e ]
 [v _buffer `uc ~T0 @X0 -> -> 1 `i `ux e ]
 "31
 [; ;Control.c: 31: int frec, rc, tr;
@@ -577,189 +578,177 @@ Version 4.0 HI-TECH Software Intermediate Code
 [e :UE 148 ]
 }
 [v $root$_isr `(v ~T0 @X0 0 e ]
-"77
-[; ;Control.c: 77: void __attribute__((picinterrupt((""))))isr(void){
+"78
+[; ;Control.c: 78: void __attribute__((picinterrupt((""))))isr(void){
 [v _isr `(v ~T1 @X0 1 ef ]
 {
 [e :U _isr ]
 [f ]
-"78
-[; ;Control.c: 78:     if(RB0 == 0){
-[e $ ! == -> _RB0 `i -> 0 `i 156  ]
-{
 "79
-[; ;Control.c: 79:         con[0] = 1;
-[e = *U + &U _con * -> -> -> 0 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 1 `i `uc ]
+[; ;Control.c: 79:     if(RBIF){
+[e $ ! _RBIF 156  ]
+{
 "80
-[; ;Control.c: 80:     }
-}
-[e :U 156 ]
+[; ;Control.c: 80:         if((RB0 == 0)&&(RB1 == 1)&&(RB2 == 1)&&(RB3 == 1)){
+[e $ ! && && && == -> _RB0 `i -> 0 `i == -> _RB1 `i -> 1 `i == -> _RB2 `i -> 1 `i == -> _RB3 `i -> 1 `i 157  ]
+{
 "81
-[; ;Control.c: 81:     if(RB1 == 0){
-[e $ ! == -> _RB1 `i -> 0 `i 157  ]
-{
+[; ;Control.c: 81:             TXREG = 0x31;
+[e = _TXREG -> -> 49 `i `uc ]
 "82
-[; ;Control.c: 82:         con[1] = 1;
-[e = *U + &U _con * -> -> -> 1 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 1 `i `uc ]
+[; ;Control.c: 82:         }
+}
+[e $U 158  ]
 "83
-[; ;Control.c: 83:     }
-}
+[; ;Control.c: 83:         else if((RB0 == 1)&&(RB1 == 0)&&(RB2 == 1)&&(RB3 == 1)){
 [e :U 157 ]
+[e $ ! && && && == -> _RB0 `i -> 1 `i == -> _RB1 `i -> 0 `i == -> _RB2 `i -> 1 `i == -> _RB3 `i -> 1 `i 159  ]
+{
 "84
-[; ;Control.c: 84:     if(RB2 == 0){
-[e $ ! == -> _RB2 `i -> 0 `i 158  ]
-{
+[; ;Control.c: 84:             TXREG = 0x32;
+[e = _TXREG -> -> 50 `i `uc ]
 "85
-[; ;Control.c: 85:         con[2] = 1;
-[e = *U + &U _con * -> -> -> 2 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 1 `i `uc ]
+[; ;Control.c: 85:         }
+}
+[e $U 160  ]
 "86
-[; ;Control.c: 86:     }
-}
-[e :U 158 ]
-"87
-[; ;Control.c: 87:     if(RB3 == 0){
-[e $ ! == -> _RB3 `i -> 0 `i 159  ]
-{
-"88
-[; ;Control.c: 88:         con[3] = 1;
-[e = *U + &U _con * -> -> -> 3 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 1 `i `uc ]
-"89
-[; ;Control.c: 89:     }
-}
+[; ;Control.c: 86:         else if((RB0 == 1)&&(RB1 == 1)&&(RB2 == 0)&&(RB3 == 1)){
 [e :U 159 ]
-"90
-[; ;Control.c: 90:     if(RB0 == 1){
-[e $ ! == -> _RB0 `i -> 1 `i 160  ]
+[e $ ! && && && == -> _RB0 `i -> 1 `i == -> _RB1 `i -> 1 `i == -> _RB2 `i -> 0 `i == -> _RB3 `i -> 1 `i 161  ]
 {
-"91
-[; ;Control.c: 91:         con[0] = 0;
-[e = *U + &U _con * -> -> -> 0 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 0 `i `uc ]
-"92
-[; ;Control.c: 92:     }
+"87
+[; ;Control.c: 87:             TXREG = 0x33;
+[e = _TXREG -> -> 51 `i `uc ]
+"88
+[; ;Control.c: 88:         }
 }
-[e :U 160 ]
-"93
-[; ;Control.c: 93:     if(RB1 == 1){
-[e $ ! == -> _RB1 `i -> 1 `i 161  ]
-{
-"94
-[; ;Control.c: 94:         con[1] = 0;
-[e = *U + &U _con * -> -> -> 1 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 0 `i `uc ]
-"95
-[; ;Control.c: 95:     }
-}
+[e $U 162  ]
+"89
+[; ;Control.c: 89:         else if((RB0 == 1)&&(RB1 == 1)&&(RB2 == 1)&&(RB3 == 0)){
 [e :U 161 ]
-"96
-[; ;Control.c: 96:     if(RB2 == 1){
-[e $ ! == -> _RB2 `i -> 1 `i 162  ]
+[e $ ! && && && == -> _RB0 `i -> 1 `i == -> _RB1 `i -> 1 `i == -> _RB2 `i -> 1 `i == -> _RB3 `i -> 0 `i 163  ]
 {
+"90
+[; ;Control.c: 90:             TXREG = 0x34;
+[e = _TXREG -> -> 52 `i `uc ]
+"91
+[; ;Control.c: 91:         }
+}
+[e $U 164  ]
+"92
+[; ;Control.c: 92:         else if((RB0 == 1)&&(RB1 == 1)&&(RB2 == 1)&&(RB3 == 1)){
+[e :U 163 ]
+[e $ ! && && && == -> _RB0 `i -> 1 `i == -> _RB1 `i -> 1 `i == -> _RB2 `i -> 1 `i == -> _RB3 `i -> 1 `i 165  ]
+{
+"93
+[; ;Control.c: 93:             TXREG = 0x30;
+[e = _TXREG -> -> 48 `i `uc ]
+"94
+[; ;Control.c: 94:         }
+}
+[e :U 165 ]
+[e :U 164 ]
+[e :U 162 ]
+[e :U 160 ]
+[e :U 158 ]
+"95
+[; ;Control.c: 95:         sprintf(buffer, "%d", con);
+[e ( _sprintf (1 , (. , &U _buffer :s 1C -> _con `i ]
 "97
-[; ;Control.c: 97:         con[2] = 0;
-[e = *U + &U _con * -> -> -> 2 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 0 `i `uc ]
+[; ;Control.c: 97:         RBIF = 0;
+[e = _RBIF -> -> 0 `i `b ]
 "98
 [; ;Control.c: 98:     }
 }
-[e :U 162 ]
+[e :U 156 ]
 "99
-[; ;Control.c: 99:     if(RB3 == 1){
-[e $ ! == -> _RB3 `i -> 1 `i 163  ]
-{
-"100
-[; ;Control.c: 100:         con[3] = 0;
-[e = *U + &U _con * -> -> -> 3 `i `ui `ux -> -> # *U &U _con `ui `ux -> -> 0 `i `uc ]
-"101
-[; ;Control.c: 101:     }
-}
-[e :U 163 ]
-"102
-[; ;Control.c: 102: }
+[; ;Control.c: 99: }
 [e :UE 155 ]
 }
-"104
-[; ;Control.c: 104: void setup(){
+"101
+[; ;Control.c: 101: void setup(){
 [v _setup `(v ~T0 @X0 1 ef ]
 {
 [e :U _setup ]
 [f ]
-"105
-[; ;Control.c: 105:     ANSEL = 0x00;
+"102
+[; ;Control.c: 102:     ANSEL = 0x00;
 [e = _ANSEL -> -> 0 `i `uc ]
-"106
-[; ;Control.c: 106:     ANSELH = 0x00;
+"103
+[; ;Control.c: 103:     ANSELH = 0x00;
 [e = _ANSELH -> -> 0 `i `uc ]
-"107
-[; ;Control.c: 107:     TRISA = 0x01;
+"104
+[; ;Control.c: 104:     TRISA = 0x01;
 [e = _TRISA -> -> 1 `i `uc ]
-"108
-[; ;Control.c: 108:     TRISB = 0x0F;
+"105
+[; ;Control.c: 105:     TRISB = 0x0F;
 [e = _TRISB -> -> 15 `i `uc ]
-"110
-[; ;Control.c: 110:     OSCCONbits.IRCF = 0B110;
+"107
+[; ;Control.c: 107:     OSCCONbits.IRCF = 0B110;
 [e = . . _OSCCONbits 0 4 -> -> 6 `i `uc ]
-"111
-[; ;Control.c: 111:     OSCCONbits.OSTS = 0;
+"108
+[; ;Control.c: 108:     OSCCONbits.OSTS = 0;
 [e = . . _OSCCONbits 0 3 -> -> 0 `i `uc ]
-"112
-[; ;Control.c: 112:     OSCCONbits.SCS = 1;
+"109
+[; ;Control.c: 109:     OSCCONbits.SCS = 1;
 [e = . . _OSCCONbits 0 0 -> -> 1 `i `uc ]
-"114
-[; ;Control.c: 114:     OPTION_REGbits.nRBPU = 0;
+"111
+[; ;Control.c: 111:     OPTION_REGbits.nRBPU = 0;
 [e = . . _OPTION_REGbits 0 5 -> -> 0 `i `uc ]
-"115
-[; ;Control.c: 115:     INTCONbits.RBIE = 1;
+"112
+[; ;Control.c: 112:     INTCONbits.RBIE = 1;
 [e = . . _INTCONbits 0 3 -> -> 1 `i `uc ]
-"117
-[; ;Control.c: 117:     IOCB = 0x0F;
+"114
+[; ;Control.c: 114:     IOCB = 0x0F;
 [e = _IOCB -> -> 15 `i `uc ]
-"118
-[; ;Control.c: 118:     WPUB = 0x0F;
+"115
+[; ;Control.c: 115:     WPUB = 0x0F;
 [e = _WPUB -> -> 15 `i `uc ]
-"120
-[; ;Control.c: 120:     USART_CONFIG(4, 1, 1);
+"117
+[; ;Control.c: 117:     USART_CONFIG(4, 1, 1);
 [e ( _USART_CONFIG (3 , , -> 4 `i -> 1 `i -> 1 `i ]
-"121
-[; ;Control.c: 121:     INTCONbits.PEIE = 1;
+"118
+[; ;Control.c: 118:     INTCONbits.PEIE = 1;
 [e = . . _INTCONbits 0 6 -> -> 1 `i `uc ]
-"122
-[; ;Control.c: 122:     INTCONbits.GIE = 1;
+"119
+[; ;Control.c: 119:     INTCONbits.GIE = 1;
 [e = . . _INTCONbits 0 7 -> -> 1 `i `uc ]
-"123
-[; ;Control.c: 123:     PIE1bits.RCIE = 1;
+"120
+[; ;Control.c: 120:     PIE1bits.RCIE = 1;
 [e = . . _PIE1bits 0 5 -> -> 1 `i `uc ]
-"124
-[; ;Control.c: 124:     RCIF = 0;
+"121
+[; ;Control.c: 121:     RCIF = 0;
 [e = _RCIF -> -> 0 `i `b ]
-"125
-[; ;Control.c: 125: }
-[e :UE 164 ]
+"122
+[; ;Control.c: 122:     con = 0x00;
+[e = _con -> -> 0 `i `uc ]
+"123
+[; ;Control.c: 123: }
+[e :UE 166 ]
 }
 [v $root$_main `(v ~T0 @X0 0 e ]
-"127
-[; ;Control.c: 127: void main(void) {
+"125
+[; ;Control.c: 125: void main(void) {
 [v _main `(v ~T0 @X0 1 ef ]
 {
 [e :U _main ]
 [f ]
-"128
-[; ;Control.c: 128:     setup();
+"126
+[; ;Control.c: 126:     setup();
 [e ( _setup ..  ]
-"129
-[; ;Control.c: 129:     while(1){
-[e :U 167 ]
+"127
+[; ;Control.c: 127:     while(1){
+[e :U 169 ]
 {
-"130
-[; ;Control.c: 130:         UART_write(con);
-[e ( _UART_write (1 -> &U _con `*uc ]
-"131
-[; ;Control.c: 131:         _delay((unsigned long)((10)*(4000000/4000.0)));
-[e ( __delay (1 -> * -> -> 10 `i `d / -> -> 4000000 `l `d .4000.0 `ul ]
-"132
-[; ;Control.c: 132:     }
+"129
+[; ;Control.c: 129:     }
 }
-[e :U 166 ]
-[e $U 167  ]
 [e :U 168 ]
-"133
-[; ;Control.c: 133: }
-[e :UE 165 ]
+[e $U 169  ]
+[e :U 170 ]
+"130
+[; ;Control.c: 130: }
+[e :UE 167 ]
 }
+[p f _sprintf 8388736 ]
+[a 1C 37 100 0 ]

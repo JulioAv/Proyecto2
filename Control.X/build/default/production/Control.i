@@ -2616,7 +2616,7 @@ extern int printf(const char *, ...);
 
 
 
-char con[], buffer[];
+char con, buffer[];
 int frec, rc, tr;
 
 void USART_CONFIG(int frec, tr, rc){
@@ -2663,30 +2663,27 @@ void UART_write(unsigned char* word){
 
 
 
+
 void __attribute__((picinterrupt((""))))isr(void){
-    if(RB0 == 0){
-        con[0] = 1;
-    }
-    if(RB1 == 0){
-        con[1] = 1;
-    }
-    if(RB2 == 0){
-        con[2] = 1;
-    }
-    if(RB3 == 0){
-        con[3] = 1;
-    }
-    if(RB0 == 1){
-        con[0] = 0;
-    }
-    if(RB1 == 1){
-        con[1] = 0;
-    }
-    if(RB2 == 1){
-        con[2] = 0;
-    }
-    if(RB3 == 1){
-        con[3] = 0;
+    if(RBIF){
+        if((RB0 == 0)&&(RB1 == 1)&&(RB2 == 1)&&(RB3 == 1)){
+            TXREG = 0x31;
+        }
+        else if((RB0 == 1)&&(RB1 == 0)&&(RB2 == 1)&&(RB3 == 1)){
+            TXREG = 0x32;
+        }
+        else if((RB0 == 1)&&(RB1 == 1)&&(RB2 == 0)&&(RB3 == 1)){
+            TXREG = 0x33;
+        }
+        else if((RB0 == 1)&&(RB1 == 1)&&(RB2 == 1)&&(RB3 == 0)){
+            TXREG = 0x34;
+        }
+        else if((RB0 == 1)&&(RB1 == 1)&&(RB2 == 1)&&(RB3 == 1)){
+            TXREG = 0x30;
+        }
+        sprintf(buffer, "%d", con);
+
+        RBIF = 0;
     }
 }
 
@@ -2711,12 +2708,12 @@ void setup(){
     INTCONbits.GIE = 1;
     PIE1bits.RCIE = 1;
     RCIF = 0;
+    con = 0x00;
 }
 
 void main(void) {
     setup();
     while(1){
-        UART_write(con);
-        _delay((unsigned long)((10)*(4000000/4000.0)));
+
     }
 }
