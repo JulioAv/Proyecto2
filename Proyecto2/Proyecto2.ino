@@ -54,11 +54,11 @@ void Menu(void);
 
 //extern uint8_t runner[];
 extern uint8_t background[];
-extern uint8_t runnerBit[];
-extern uint8_t bossBit[];
-extern uint8_t cloudBit[];
-extern uint8_t routeBit[];
-extern uint8_t rockBit[];
+//extern uint8_t runnerBit[];
+//extern uint8_t bossBit[];
+//extern uint8_t cloudBit[];
+//extern uint8_t routeBit[];
+//extern uint8_t rockBit[];
 struct Sprite1 { // estructura para sprites
   int x; // posicion x
   int y; // posicion y
@@ -71,11 +71,11 @@ struct Sprite1 { // estructura para sprites
 }runner, cloud, boss, route, rock;
 
 
-int subir, bajar, entrada, entradaa, contador;
+int subir, bajar, entrada, entradaa, contador, inicio;
 unsigned long previousMillis = 0;  
 const long interval = 42;
 int rock_flag, kick_flag = 0;
-bool colision, inicio;
+bool colision;
 char buffer[1];
 
 void setup() {
@@ -147,17 +147,19 @@ void setup() {
   Serial.write("probando");
   
  inicio = 0;
- Menu();
 }
 //***************************************************************************************************************************************
 // Loop
 //***************************************************************************************************************************************
 void loop() {
     unsigned long currentMillis = millis();
-  if(inicio){
+  if(inicio==0){
+    Menu();
+  }
+  if(inicio==1){
     LCD_Bitmap(0, 0, 320, 240, background);
     contador = 0;
-    inicio = 0;
+    inicio = 2;
   }
   // actualización de frame cada 42ms = 24fps
   if (currentMillis - previousMillis >= interval) {
@@ -237,13 +239,16 @@ void loop() {
       LCD_Bitmap(rock.x, rock.y, rock.width, rock.height, rockBit);
       rock.y+=4;
       FillRect(rock.x, rock.y-rock.height/10, rock.width, rock.height, 0xffff);
+      if(rock.y==180){
+        FillRect(0, 120, 320, 40, 0x0000);
+      }
     }
     if(rock.y==208){
         rock_flag = 2;
       }
     if(rock_flag==2){
       LCD_Bitmap(rock.x, rock.y, rock.width, rock.height, rockBit);
-      rock.x-=4;
+      rock.x-=5;
       FillRect(rock.x + rock.width, rock.y, rock.width, rock.height, 0xffff);
     }
     if((rock.x <= runner.x)&&(rock_flag==2)){
@@ -251,6 +256,7 @@ void loop() {
       digitalWrite(BLUE_LED, HIGH);
       rock.x = boss.x;
       rock.y = boss.y;
+      FillRect(runner.x, runner.y, runner.width+rock.width/2, runner.height, 0xffff);
     }
     //************************************************************************************************************************************
     //Configuracion y acciones de la nube
@@ -620,71 +626,135 @@ bool Collision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2){
 }
 
 void Menu(){
-  FillRect(0,0,320,240,0x0000);
+  mapeo_SD("menu.txt");
   String text1 = "BIT.TRIP RUNNER";
   LCD_Print(text1, 40, 110, 2, 0xffff, 0x0000);
-  delay(1000);
-  FillRect(0,0,320,240,0x0000);
+  //delay(1000);
+  mapeo_SD("menu.txt");
   text1 = "PRESIONE P1 PARA";
   LCD_Print(text1, 40, 90, 2, 0xffff, 0x0000);
-  text1 = "NUEVA PARTIDA O";
-  LCD_Print(text1, 40, 110, 2, 0xffff, 0x0000);
-  text1 = "P2 PARA CARGAR SD";
-  LCD_Print(text1, 40, 130, 2, 0xffff, 0x0000);
+  text1 = "NUEVA PARTIDA";
+  LCD_Print(text1, 50, 110, 2, 0xffff, 0x0000);
   entrada = Serial2.read();
   entradaa = Serial3.read();
-  while(inicio==0){
+  while(entrada!=0x31){
     entrada = Serial2.read();
-    entradaa = Serial3.read();
     if(entrada==0x31){
       inicio = 1;
       contador = 0;
     }
-    else if(entradaa==0x31){
-      myFile = SD.open("test.txt", FILE_READ);
-      contador = myFile.read();
-      myFile.close();
-      inicio = 1;
-    }
   }
-  myFile = SD.open("test.txt", FILE_READ);
-  Serial.write(myFile.read());
-  myFile.close();
+//  myFile = SD.open("test.txt", FILE_READ);
+//  Serial.write(myFile.read());
+//  myFile.close();
   return;
 }
+
 
 void Muerto(){
   colision = 0;
   FillRect(50,50,220,140,0x0000);
-  sprintf(buffer, "%d", contador/7);
-  String text2 = buffer;
+//  sprintf(buffer, "%d", contador);
+//  String text2 = buffer;
+  String text2 = String(contador/5);
   String text1 = "PUNTOS";
   LCD_Print(text2, 60, 60, 2, 0xffff, 0x0000);
   LCD_Print(text1, 110, 60, 2, 0xffff, 0x0000);
-  text1 = "PRESIONE";
+  text1 = "PRESIONE P1";
   LCD_Print(text1, 60, 80, 2, 0xffff, 0x0000);
-  text1 = "P1";
-  LCD_Print(text1, 60, 100, 2, 0xffff, 0x0000);
   text1 = "PARA SEGUIR";
   LCD_Print(text1, 60, 120, 2, 0xffff, 0x0000);
-  while(entrada!=0x31){
+  text1 = "P2 PARA MENU";
+  LCD_Print(text1, 60, 140, 2, 0xffff, 0x0000);
+  while(inicio==2){
     entrada = Serial2.read();
     entradaa = Serial3.read();
+    if(entrada == 0x31){
+      inicio = 1;
+    }
+    if(entradaa==0x31){
+      inicio = 0;
+      FillRect(0,0,320,240,0x0000);
+    }
   }
-  myFile = SD.open("test.txt", FILE_WRITE);
-  sprintf(buffer, "%d", contador/7);
-  myFile.println(buffer);
-  myFile.close();
+  contador=0;
+//  myFile = SD.open("test.txt", FILE_WRITE);
+//  sprintf(buffer, "%d", contador/7);
+//  myFile.println(buffer);
+//  myFile.close();
   kick_flag = 0;
   rock_flag = 0;
-  inicio = 1;
   rock.x = boss.x;
   rock.y = 100;
-  rock.width = 32;
-  rock.height = 32;
-  rock.columns = 1;
-  rock.index = 0;
-  rock.flip = 0;
-  rock.offset = 0;
   return;
+}
+int ascii2hex(int a) {
+  switch (a) {
+    case (48):      //caso 0
+      return 0;
+    case (49):      //caso 1
+      return 1;
+    case (50):      //caso 2
+      return 2;
+    case (51):      //caso 3
+      return 3;
+    case (52):      //caso 4
+      return 4;
+    case (53):      //caso 5
+      return 5;
+    case (54):      //caso 6
+      return 6;
+    case (55):      //caso 7
+      return 7;
+    case (56):      //caso 8
+      return 8;
+    case (57):      //caso 9
+      return 9;
+    case (97):      //caso A
+      return 10;
+    case (98):      //caso B
+      return 11;
+    case (99):      //caso C
+      return 12;
+    case (100):     //caso D
+      return 13;
+    case (101):     //caso E
+      return 14;
+    case (102):     //caso F
+      return 15;
+  }
+}
+//-------FUNCION PARA MOSTRAR LAS IMAGENES DESDE SD
+void mapeo_SD(char doc[]) {
+  myFile = SD.open(doc, FILE_READ);   //se toma el archivo de la imagen 
+  int hex1 = 0;                       //declaracion de variable 1 para valor hex
+  int val1 = 0;                       
+  int val2 = 0;
+  int mapear = 0;
+  int vertical = 0;
+  unsigned char maps[640];            //se crea arreglo vacio para almacenar el mapeo
+
+  if (myFile) {
+    while (myFile.available() ) {     //se leen datos mientras este disponible
+      mapear = 0;
+      while (mapear < 640) {          //se limita el rango
+        hex1 = myFile.read();         //se lee el archivo con la imagen
+        if (hex1 == 120) {
+          val1 = myFile.read();       //se lee el primer valor hexadecimal del bitmap
+          val2 = myFile.read();       //se lee el segundo valor hexadecimal del bitmap
+          val1 = ascii2hex(val1);     //se mapea el primer valor hexadecimal 
+          val2 = ascii2hex(val2);     //se mapea el segundo valor hexadecimal 
+          maps[mapear] = val1 * 16 + val2;  //se colona en el arreglo nuevo
+          mapear++;                         //se cambia de posicion
+        }
+      }
+      LCD_Bitmap(0, vertical, 320, 1, maps);
+      vertical++;
+    }
+    myFile.close();
+  }
+  else {
+    Serial.println("No se pudo abrir la imagen, prueba nuevamente");
+    myFile.close();
+  }
 }
